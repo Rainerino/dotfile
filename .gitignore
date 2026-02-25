@@ -9,3 +9,5 @@
 
 # 4. BUT, inside .config, do NOT ignore the polybar folder
 !.config/polybar/
+
+!.config/alacritty/
