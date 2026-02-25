@@ -1,12 +1,11 @@
 # 1. Ignore everything
-*
+/*
 !.gitignore
 # 2. Un-ignore the .i3 folder (if it is in the root)
-
 !.i3/
-
-# 3. Un-ignore the .config folder (so Git looks inside)
 !.config/
+# 3. Inside .config, ignore everything again (because we un-ignored the whole folder in step 2)
+.config/*
 
-# 4. Un-ignore the specific subfolder
+# 4. BUT, inside .config, do NOT ignore the polybar folder
 !.config/polybar/
