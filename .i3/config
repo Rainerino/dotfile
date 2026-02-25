@@ -293,7 +293,7 @@ exec_always --no-startup-id fix_xcursor
 exec_always --no-startup-id dwall -s earth
 # Replace 'NVIDIA-G0' and 'modesetting' with your actual provider names
 exec_always --no-startup-id xrandr --output HDMI-A-0 --mode 3000x2000 --rate 60.00
-exec_always --no-startup-id ~/.config/polybar/launch.sh
+exec_always --no-startup-id ~/.config/polybar/launch.sh --shades
 exec_always --no-startup-id ulauncher --hide-window
 exec_always --no-startup-id sudo /usr/bin/clash-verge
 
@@ -427,4 +427,3 @@ mode "$mode_gaps_outer" {
         bindsym Return mode "default"
         bindsym Escape mode "default"
 }
-
