@@ -10,6 +10,10 @@ launch_bar() {
 	# Wait until the processes have been shut down
 	while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 
+	if [[ "$style" == "shades" ]]; then
+		"$dir/$style/scripts/random-palette.sh"
+	fi
+
 	# Launch the bar
 	if [[ "$style" == "hack" || "$style" == "cuts" ]]; then
 		polybar -q top -c "$dir/$style/config.ini" &

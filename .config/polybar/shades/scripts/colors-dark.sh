@@ -3,6 +3,7 @@
 # Color files
 PFILE="$HOME/.config/polybar/shades/colors.ini"
 RFILE="$HOME/.config/polybar/shades/scripts/rofi/colors.rasi"
+SDIR="$HOME/.config/polybar/shades/scripts"
 
 # Change colors
 change_color() {
@@ -33,8 +34,12 @@ change_color() {
 	  fg:    #FFFFFFFF;
 	}
 	EOF
-	
-	polybar-msg cmd restart
+
+	"$SDIR"/workspace-colors.sh
+
+	if pgrep -u "$UID" -x polybar >/dev/null; then
+		polybar-msg cmd restart
+	fi
 }
 
 if  [[ $1 = "--amber" ]]; then
