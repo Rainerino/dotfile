@@ -289,13 +289,13 @@ exec --no-startup-id clipit
 exec_always --no-startup-id ff-theme-util
 exec --no-startup-id picom -b
 exec_always --no-startup-id fix_xcursor
-# exec_always --no-startup-id /usr/bin/feh --bg-center --zoom fill --auto-zoom  '/home/yiyi/Downloads/7.jpg' &
+# exec_always --no-startup-id /usr/bin/feh --bg-center --zoom fill  '/home/yiyi/Pictures/Screenshots/conf.png' &
 exec_always --no-startup-id dwall -s earth
 # Replace 'NVIDIA-G0' and 'modesetting' with your actual provider names
 exec_always --no-startup-id xrandr --output HDMI-A-0 --mode 3000x2000 --rate 60.00
 exec_always --no-startup-id ~/.config/polybar/launch.sh --shades
 exec_always --no-startup-id ulauncher --hide-window
-exec_always --no-startup-id sudo /usr/bin/clash-verge
+exec_always --no-startup-id sudo /usr/bin/clash-verge > /dev/null 2>&1
 
 # Color palette used for the terminal ( ~/.Xresources file )
 # Colors are gathered based on the documentation:
