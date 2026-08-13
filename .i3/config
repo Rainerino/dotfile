@@ -296,6 +296,7 @@ exec_always --no-startup-id xrandr --output HDMI-A-0 --mode 3000x2000 --rate 60.
 exec_always --no-startup-id ~/.config/polybar/launch.sh --shades
 exec_always --no-startup-id ulauncher --hide-window
 exec_always --no-startup-id sudo /usr/bin/clash-verge > /dev/null 2>&1
+exec_always --no-startup-id xset s off -dpms
 
 # Color palette used for the terminal ( ~/.Xresources file )
 # Colors are gathered based on the documentation:

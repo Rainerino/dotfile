@@ -33,7 +33,7 @@ def get_gpu_util():
     try:
         # Run nvidia-smi
         out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+            ["nvidia-smi", "--id=1", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
             encoding="utf-8"
         )
         return get_color(out.strip(), "%", 30, 80)
@@ -43,7 +43,7 @@ def get_gpu_util():
 def get_gpu_temp():
     try:
         out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"],
+            ["nvidia-smi", "--id=1", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"],
             encoding="utf-8"
         )
         return get_color(out.strip(), "°C", 60, 80)
@@ -98,16 +98,41 @@ def get_cpu_power():
 
     return f"{GREY}N/A{RESET}"
 
-def get_fan_speed():
-    paths = glob.glob("/sys/class/hwmon/hwmon*/fan*_input")
-    for path in paths:
+def read_hwmon_value(path):
+    try:
+        with open(path, "r") as value_file:
+            return int(value_file.read().strip())
+    except (OSError, ValueError):
+        return None
+
+def find_hwmon_input(chip_name, input_name):
+    for hwmon_dir in glob.glob("/sys/class/hwmon/hwmon*"):
         try:
-            with open(path, "r") as f:
-                speed = int(f.read().strip())
-            if speed > 0:
-                return get_color(speed, "RPM", 1400, 2200)
-        except:
+            with open(os.path.join(hwmon_dir, "name"), "r") as name_file:
+                if name_file.read().strip() != chip_name:
+                    continue
+        except OSError:
             continue
+
+        input_path = os.path.join(hwmon_dir, input_name)
+        if os.path.exists(input_path):
+            return input_path
+
+    return None
+
+def get_fan_speed():
+    cpu_fan_path = find_hwmon_input("nct6799", "fan4_input")
+    if cpu_fan_path:
+        speed = read_hwmon_value(cpu_fan_path)
+        if speed is not None:
+            return get_color(speed, "RPM", 1400, 2200)
+
+    paths = sorted(glob.glob("/sys/class/hwmon/hwmon*/fan*_input"))
+    for path in paths:
+        speed = read_hwmon_value(path)
+        if speed and speed > 0:
+            return get_color(speed, "RPM", 1400, 2200)
+
     return f"{GREY}  0RPM{RESET}"
 
 if __name__ == "__main__":
