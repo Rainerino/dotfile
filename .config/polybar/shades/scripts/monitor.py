@@ -2,7 +2,6 @@
 import sys
 import subprocess
 import glob
-import time
 import os
 
 # --- COLORS ---
@@ -29,49 +28,54 @@ def get_color(val, unit, warn, crit):
     else:
         return f"{GREY}{val_str}{unit}{RESET}"
 
-def get_gpu_util():
+def read_text(path):
     try:
-        # Run nvidia-smi
+        with open(path, "r", encoding="utf-8") as handle:
+            return handle.read().strip()
+    except (OSError, ValueError):
+        return ""
+
+def get_nvidia_value(field):
+    try:
         out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
-            encoding="utf-8"
+            [
+                "nvidia-smi",
+                f"--query-gpu={field}",
+                "--format=csv,noheader,nounits",
+            ],
+            encoding="utf-8",
+            stderr=subprocess.DEVNULL,
+            timeout=3,
         )
-        return get_color(out.strip(), "%", 30, 80)
-    except:
-        return f"{GREY}  0%{RESET}"
+        # The bar represents the primary GPU when more than one is installed.
+        return out.splitlines()[0].strip()
+    except (IndexError, OSError, subprocess.SubprocessError):
+        return None
+
+def get_gpu_util():
+    value = get_nvidia_value("utilization.gpu")
+    return get_color(value, "%", 30, 80)
 
 def get_gpu_temp():
-    try:
-        out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"],
-            encoding="utf-8"
-        )
-        return get_color(out.strip(), "°C", 60, 80)
-    except:
-        return f"{GREY}N/A{RESET}"
+    value = get_nvidia_value("temperature.gpu")
+    return get_color(value, "°C", 60, 80)
 
 def get_cpu_temp():
-    # Scan for Tctl or Package temp
-    paths = glob.glob("/sys/class/hwmon/hwmon*/temp*_label")
-    target_input = None
-
-    for path in paths:
-        try:
-            with open(path, "r") as f:
-                label = f.read().strip()
-            if label in ["Tctl", "Package", "CPU Package"]:
-                target_input = path.replace("_label", "_input")
-                break
-        except:
+    # Prefer the CPU's own hwmon device instead of similarly named board probes.
+    preferred_labels = ("Tctl", "Tdie", "CPU Package", "Package id 0", "Package")
+    for hwmon in glob.glob("/sys/class/hwmon/hwmon*"):
+        if read_text(os.path.join(hwmon, "name")) not in ("k10temp", "zenpower", "coretemp"):
             continue
-
-    if target_input and os.path.exists(target_input):
-        try:
-            with open(target_input, "r") as f:
-                raw = int(f.read().strip())
-            return get_color(raw / 1000, "°C", 65, 85)
-        except:
-            pass
+        labels = {}
+        for label_path in glob.glob(os.path.join(hwmon, "temp*_label")):
+            labels[read_text(label_path)] = label_path.replace("_label", "_input")
+        for label in preferred_labels:
+            raw = read_text(labels.get(label, ""))
+            if raw:
+                try:
+                    return get_color(int(raw) / 1000, "°C", 65, 85)
+                except ValueError:
+                    continue
     return f"{GREY}N/A{RESET}"
 
 def get_cpu_power():
@@ -99,16 +103,36 @@ def get_cpu_power():
     return f"{GREY}N/A{RESET}"
 
 def get_fan_speed():
-    paths = glob.glob("/sys/class/hwmon/hwmon*/fan*_input")
-    for path in paths:
-        try:
-            with open(path, "r") as f:
-                speed = int(f.read().strip())
-            if speed > 0:
-                return get_color(speed, "RPM", 1400, 2200)
-        except:
-            continue
-    return f"{GREY}  0RPM{RESET}"
+    candidates = []
+    board_drivers = ("nct6687", "nct6686", "nct6683", "nct6775", "it87")
+
+    for hwmon in glob.glob("/sys/class/hwmon/hwmon*"):
+        driver = read_text(os.path.join(hwmon, "name"))
+        for path in glob.glob(os.path.join(hwmon, "fan*_input")):
+            try:
+                speed = int(read_text(path))
+            except ValueError:
+                continue
+            if speed <= 0:
+                continue
+
+            label = read_text(path.replace("_input", "_label")).lower()
+            basename = os.path.basename(path)
+            if "cpu" in label:
+                priority = 0
+            elif driver in board_drivers and basename == "fan1_input":
+                priority = 1
+            elif driver in board_drivers:
+                priority = 2
+            else:
+                priority = 3
+            candidates.append((priority, basename, speed))
+
+    if not candidates:
+        return f"{GREY}N/A{RESET}"
+
+    _, _, speed = min(candidates)
+    return get_color(speed, "RPM", 1400, 2200)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

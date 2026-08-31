@@ -57,7 +57,7 @@ bindsym $mod+Ctrl+m exec terminal -e 'alsamixer'
 
 # Start Applications
 bindsym $mod+Ctrl+b exec terminal -e 'bmenu'
-bindsym $mod+Shift+Return exec firefox
+bindsym $mod+Shift+Return exec chromium
 bindsym $mod+Shift+f exec thunar
 # bindsym $mod+F3 exec ranger
 bindsym $mod+Shift+F3 exec pcmanfm_pkexec
@@ -295,7 +295,9 @@ exec_always --no-startup-id dwall -s earth
 exec_always --no-startup-id xrandr --output HDMI-A-0 --mode 3000x2000 --rate 60.00
 exec_always --no-startup-id ~/.config/polybar/launch.sh --shades
 exec_always --no-startup-id ulauncher --hide-window
-exec_always --no-startup-id sudo /usr/bin/clash-verge
+exec_always --no-startup-id /usr/bin/clash-verge
+exec_always --no-startup-id xset s off
+exec_always --no-startup-id xset -dpms
 
 # Color palette used for the terminal ( ~/.Xresources file )
 # Colors are gathered based on the documentation:

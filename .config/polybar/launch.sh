@@ -11,7 +11,7 @@ launch_bar() {
 	while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 
 	if [[ "$style" == "shades" ]]; then
-		"$dir/$style/scripts/random-palette.sh"
+		"$dir/$style/scripts/colors-dark.sh" --brown
 	fi
 
 	# Launch the bar
